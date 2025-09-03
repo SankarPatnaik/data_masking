@@ -1,0 +1,56 @@
+
+language: "en"
+models:
+  spacy_model: "en_core_web_sm"  # run: python -m spacy download en_core_web_sm
+detection:
+  confidence_threshold: 0.50
+  use_regex: true
+  use_ner: true
+  structured_keys:
+    - key: "(?i)^(pan|aadhaar|ssn|student_id|roll|passport)$"
+      policy: ENCRYPT
+    - key: "(?i)^(email|phone|mobile|address)$"
+      policy: TOKENIZE
+  custom_regexes:
+    - name: "PAN"
+      pattern: "\b([A-Z]{5}[0-9]{4}[A-Z])\b"
+      policy: ENCRYPT
+    - name: "AADHAAR"
+      pattern: "\b\d{4}\s?\d{4}\s?\d{4}\b"
+      policy: FPE
+    - name: "IN_PHONE"
+      pattern: "(?:\+91[- ]?)?[6-9]\d{9}\b"
+      policy: TOKENIZE
+    - name: "EMAIL"
+      pattern: "[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+"
+      policy: HASH
+entities:
+  PERSON: TOKENIZE
+  EMAIL:  HASH
+  PHONE:  TOKENIZE
+  ID:     ENCRYPT
+masking:
+  default_policy: NONE
+  mask_char: "█"
+  preserve_length: true
+encryption:
+  algorithm: "AES_GCM"
+  key_id: "kms-key-001"
+  key_source: "ENV"
+  env_key_var: "MASKING_AES_KEY_B64"
+  aad_fields: ["tenant_id", "doc_type"]
+hashing:
+  algo: "SHA256"
+  salt_env_var: "MASKING_SALT_B64"
+tokenization:
+  deterministic: true
+  secret_env_var: "MASKING_TOKEN_SECRET_B64"
+  prefix: "tok_"
+fpe:
+  enabled: true
+  radix: 10
+  tweak: "Zm9vYmFy"   # base64 "foobar" (example only); set MASKING_FPE_KEY_HEX to enable FF3.
+output:
+  include_annotations: true
+  include_replacement_map: false
+  drop_plaintext: true

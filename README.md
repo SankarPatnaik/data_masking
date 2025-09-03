@@ -1,0 +1,123 @@
+
+# PII Masking & Encryption Framework (NER + Regex + Policy)
+
+A production-ready Python framework to **detect and protect PII** before sending to LLMs or downstream systems.
+- Hybrid detection: **NER (spaCy)** + **Regex** + **Structured key rules for JSON**
+- Transform policies: **REDACT**, **HASH**, **ENCRYPT (AES-GCM)**, **FPE** (optional), **TOKENIZE**
+- Config-first: add new attributes without code changes
+- Run as a **FastAPI service** or a **CLI**
+
+> Inspired by real-world needs to keep sensitive user data safe, especially for student & professional communities.
+
+---
+
+## Quick start
+
+### 1) Clone & install
+```bash
+python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+# Optional (for NER):
+python -m spacy download en_core_web_sm
+```
+
+### 2) Set secrets (examples)
+```bash
+# 32-byte AES key (base64) for AES-256-GCM
+export MASKING_AES_KEY_B64=$(python - <<'PY'
+import os,base64;print(base64.b64encode(os.urandom(32)).decode())
+PY)
+
+# Salt for hashing (base64)
+export MASKING_SALT_B64=$(python - <<'PY'
+import os,base64;print(base64.b64encode(os.urandom(16)).decode())
+PY)
+
+# Secret for deterministic tokens (base64)
+export MASKING_TOKEN_SECRET_B64=$(python - <<'PY'
+import os,base64;print(base64.b64encode(os.urandom(32)).decode())
+PY)
+```
+
+### 3) Run the API
+```bash
+export MASKING_CONFIG_PATH=masking_config.yaml
+uvicorn src.service.app:app --reload --port 8000
+```
+- `GET /health`
+- `POST /mask/text` → `{ "text": "Arjun email arjun@example.com", "context": {"tenant_id":"uni-42","doc_type":"resume"} }`
+- `POST /mask/json` → `{ "payload": {...}, "context": {...}, "also_scan_text_nodes": true }`
+
+### 4) Use the CLI
+```bash
+python -m src.cli text "Call me at +91-9876543210 or email a@b.com"
+python -m src.cli json examples/sample.json
+```
+
+### 5) Docker (optional)
+```bash
+docker build -t pii-masking .
+docker run -p 8000:8000 --env-file .env pii-masking
+```
+
+---
+
+## Config-first masking
+
+See `masking_config.yaml`. Add new attributes via:
+- `detection.structured_keys`: JSON key patterns + policy
+- `detection.custom_regexes`: regex pattern + policy
+- `entities`: map NER label → policy
+
+> **Never** send the `replacement_map` to LLMs; keep it server-side only.
+
+---
+
+## Project structure
+
+```
+pii-masking-framework/
+├─ README.md
+├─ LICENSE
+├─ requirements.txt
+├─ masking_config.yaml
+├─ src/
+│  ├─ masking_engine.py        # core detection + policy + transforms
+│  ├─ cli.py                   # CLI entrypoints
+│  └─ service/
+│     └─ app.py                # FastAPI service
+├─ examples/
+│  ├─ sample_text.txt
+│  └─ sample.json
+├─ tests/
+│  ├─ test_masking_basic.py
+│  └─ config_test.yaml
+├─ Dockerfile
+└─ .gitignore
+```
+
+---
+
+## Security notes
+
+- Use **AES-GCM** with a 32-byte key; rotate via KMS (not included in this sample).
+- Bind ciphertext to context with **AAD** (`tenant_id`, `doc_type`) for replay resistance.
+- Prefer **TOKENIZE** for analytics, **ENCRYPT** for reversible protection, **HASH** when irreversibility is required.
+- Disable logs of raw inputs. Set `output.drop_plaintext: true` in config.
+- Keep `replacement_map` **in memory** or in an encrypted store with TTL. Never send downstream.
+
+---
+
+## Tests
+
+```bash
+pytest -q
+```
+
+This runs without spaCy by using a test config that sets `use_ner: false` and relies on regex.
+
+---
+
+## License
+
+MIT
