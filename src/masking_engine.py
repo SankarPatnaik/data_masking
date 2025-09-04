@@ -322,6 +322,27 @@ class Transformer:
         blob = base64.b64encode(nonce + ct).decode("utf-8")
         return f"enc:{self.cfg.key_id}:{blob}"
 
+    def decrypt_value(self, token: str, context: Dict[str, str]) -> str:
+        """Decrypt a value produced by ``_encrypt``.
+
+        If the input does not look like an encrypted value, it is returned as-is.
+        Raises ``ValueError`` if decryption fails or AES is not configured.
+        """
+        if not token.startswith("enc:"):
+            return token
+        if self.cfg.enc_algo != "AES_GCM" or AESGCM is None or not self.cfg.aes_key:
+            raise ValueError("AES-GCM decryption not configured")
+        try:
+            _, _key_id, blob = token.split(":", 2)
+            raw = base64.b64decode(blob)
+            nonce, ct = raw[:12], raw[12:]
+            aad = "|".join([f"{k}:{context.get(k,'')}" for k in self.cfg.aad_fields]).encode("utf-8")
+            aesgcm = AESGCM(self.cfg.aes_key)
+            pt = aesgcm.decrypt(nonce, ct, aad)
+            return pt.decode("utf-8")
+        except Exception as e:
+            raise ValueError("Decryption failed") from e
+
     def _fpe(self, s: str) -> str:
         # Only digits supported in this example (e.g., Aadhaar). Strip non-digits, encrypt, then re-map.
         digits = "".join(ch for ch in s if ch.isdigit())
@@ -377,3 +398,8 @@ class MaskingEngine:
         return {
             "masked_json": masked_obj
         }
+
+    def decrypt_value(self, token: str, context: Dict[str, str] = None) -> str:
+        """Decrypt an encrypted token produced by the masking engine."""
+        context = context or {}
+        return self.tx.decrypt_value(token, context)

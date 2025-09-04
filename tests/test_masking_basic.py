@@ -14,3 +14,13 @@ def test_text_hash_email():
     res = engine.mask_text("Email me at user@example.com")
     masked = res["masked_text"]
     assert "hash_" in masked
+
+
+def test_encrypt_decrypt_roundtrip():
+    cfg = Config.from_yaml("tests/config_test.yaml")
+    engine = MaskingEngine(cfg)
+    res = engine.mask_text("My id is 1234")
+    masked = res["masked_text"]
+    enc_val = masked.split()[-1]
+    assert enc_val.startswith("enc:")
+    assert engine.decrypt_value(enc_val) == "1234"

@@ -10,6 +10,9 @@ detection:
     - name: "EMAIL"
       pattern: "[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+"
       policy: HASH
+    - name: "ID"
+      pattern: "\\b\\d{4}\\b"
+      policy: ENCRYPT
 entities: {}
 masking:
   default_policy: NONE
