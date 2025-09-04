@@ -14,46 +14,69 @@ A production-ready Python framework to **detect and protect PII** before sending
 ## Quick start
 
 ### 1) Clone & install
+
+#### Unix/macOS (bash/zsh)
 ```bash
-python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+# Optional (for NER):
+python -m spacy download en_core_web_sm
+```
+
+#### Windows (PowerShell)
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 # Optional (for NER):
 python -m spacy download en_core_web_sm
 ```
 
 ### 2) Set secrets (examples)
+
+#### Unix/macOS (bash/zsh)
 ```bash
 # 32-byte AES key (base64) for AES-256-GCM
-export MASKING_AES_KEY_B64=$(python - <<'PY'
-import os,base64;print(base64.b64encode(os.urandom(32)).decode())
-PY)
+export MASKING_AES_KEY_B64=$(python -c "import os,base64;print(base64.b64encode(os.urandom(32)).decode())")
 
 # Salt for hashing (base64)
-export MASKING_SALT_B64=$(python - <<'PY'
-import os,base64;print(base64.b64encode(os.urandom(16)).decode())
-PY)
+export MASKING_SALT_B64=$(python -c "import os,base64;print(base64.b64encode(os.urandom(16)).decode())")
 
 # Secret for deterministic tokens (base64)
-export MASKING_TOKEN_SECRET_B64=$(python - <<'PY'
-import os,base64;print(base64.b64encode(os.urandom(32)).decode())
-PY)
+export MASKING_TOKEN_SECRET_B64=$(python -c "import os,base64;print(base64.b64encode(os.urandom(32)).decode())")
+```
+
+#### Windows (PowerShell)
+```powershell
+# 32-byte AES key (base64) for AES-256-GCM
+$env:MASKING_AES_KEY_B64 = python -c "import os,base64;print(base64.b64encode(os.urandom(32)).decode())"
+
+# Salt for hashing (base64)
+$env:MASKING_SALT_B64 = python -c "import os,base64;print(base64.b64encode(os.urandom(16)).decode())"
+
+# Secret for deterministic tokens (base64)
+$env:MASKING_TOKEN_SECRET_B64 = python -c "import os,base64;print(base64.b64encode(os.urandom(32)).decode())"
 ```
 
 ### 3) Run the API
+
+#### Unix/macOS (bash/zsh)
 ```bash
 export MASKING_CONFIG_PATH=masking_config.yaml
 uvicorn src.service.app:app --reload --port 8000
 ```
-- `GET /health`
-- `POST /mask/text` → `{ "text": "Arjun email arjun@example.com", "context": {"tenant_id":"uni-42","doc_type":"resume"} }`
-- `POST /mask/json` → `{ "payload": {...}, "context": {...}, "also_scan_text_nodes": true }`
 
-### 4) Use the CLI
+#### Windows (PowerShell)
+```powershell
+$env:MASKING_CONFIG_PATH = "masking_config.yaml"
+uvicorn src.service.app:app --reload --port 8000
+```
+
+### 4) Use the CLI (same commands for Unix/PowerShell)
 ```bash
 python -m src.cli text "Call me at +91-9876543210 or email a@b.com"
 python -m src.cli json examples/sample.json
 ```
-
 ### 5) Docker (optional)
 ```bash
 docker build -t pii-masking .
