@@ -83,6 +83,19 @@ docker build -t pii-masking .
 docker run -p 8000:8000 --env-file .env pii-masking
 ```
 
+### 6) Decrypt encrypted values
+```python
+from src.masking_engine import Config, MaskingEngine
+
+cfg = Config.from_yaml("masking_config.yaml")
+engine = MaskingEngine(cfg)
+
+res = engine.mask_text("PAN ABCDE1234F")
+cipher = res["masked_text"].split()[-1]
+plain = engine.decrypt_value(cipher, {"tenant_id": "t1", "doc_type": "sample"})
+print(plain)
+```
+
 ---
 
 ## Config-first masking
