@@ -93,10 +93,11 @@ from src.masking_engine import Config, MaskingEngine
 cfg = Config.from_yaml("masking_config.yaml")
 engine = MaskingEngine(cfg)
 
-res = engine.mask_text("PAN ABCDE1234F")
+ctx = {"tenant_id": "t1", "doc_type": "sample"}
+res = engine.mask_text("PAN ABCDE1234F", ctx)
 cipher = res["masked_text"].split()[-1]
-plain = engine.decrypt_value(cipher, {"tenant_id": "t1", "doc_type": "sample"})
-print(plain)
+plain = engine.decrypt_value(cipher, ctx)
+print(plain)  # PAN ABCDE1234F
 ```
 
 ---
