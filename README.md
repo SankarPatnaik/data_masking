@@ -7,8 +7,6 @@ A production-ready Python framework to **detect and protect PII** before sending
 - Config-first: add new attributes without code changes
 - Run as a **FastAPI service** or a **CLI**
 
-> Inspired by real-world needs to keep sensitive user data safe, especially for student & professional communities.
-
 ---
 
 ## Quick start
