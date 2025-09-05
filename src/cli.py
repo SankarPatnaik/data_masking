@@ -1,5 +1,8 @@
+import argparse
+import json
+import os
+import sys
 
-import argparse, json, os, sys
 from src.masking_engine import Config, MaskingEngine
 
 def main():
@@ -21,10 +24,37 @@ def main():
         res = engine.mask_text(args.text)
         print(json.dumps(res, ensure_ascii=False, indent=2))
     elif args.cmd == "json":
+        # Determine if file is JSON array, single object, or JSON Lines
         with open(args.path, "r", encoding="utf-8") as f:
-            payload = json.load(f)
-        res = engine.mask_json(payload)
-        print(json.dumps(res, ensure_ascii=False, indent=2))
+            content = f.read()
+
+        stripped = content.strip()
+        records = []
+        if stripped.startswith("[") and stripped.endswith("]"):
+            try:
+                records = json.loads(stripped)
+            except json.JSONDecodeError:
+                print("Invalid JSON array", file=sys.stderr)
+                sys.exit(1)
+        else:
+            try:
+                records = [json.loads(stripped)]
+            except json.JSONDecodeError:
+                # Treat as JSON Lines
+                for line in content.splitlines():
+                    line = line.strip()
+                    if not line:
+                        continue
+                    records.append(json.loads(line))
+
+        # Apply masking to each record
+        masked = [engine.mask_json(rec) for rec in records]
+
+        # Return list if multiple records, else single object
+        if len(masked) == 1:
+            print(json.dumps(masked[0], ensure_ascii=False, indent=2))
+        else:
+            print(json.dumps(masked, ensure_ascii=False, indent=2))
     else:
         parser.print_help()
 
