@@ -73,9 +73,14 @@ uvicorn src.service.app:app --reload --port 8000
 ```
 
 ### 4) Use the CLI (same commands for Unix/PowerShell)
+The `json` command accepts a single JSON object, a JSON array, or newline-delimited JSON (JSON Lines).
+Each record is masked independently.
 ```bash
 python -m src.cli text "Call me at +91-9876543210 or email a@b.com"
+# Single JSON object
 python -m src.cli json examples/sample.json
+# JSON Lines
+python -m src.cli json examples/sample_lines.jsonl
 ```
 ### 5) Docker (optional)
 ```bash
