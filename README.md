@@ -86,6 +86,22 @@ docker build -t pii-masking .
 docker run -p 8000:8000 --env-file .env pii-masking
 ```
 
+### Encrypt and decrypt files
+
+The FastAPI service also exposes simple endpoints for encrypting uploaded files and decrypting the ciphertext.
+
+```bash
+# Encrypt a file
+curl -F "file=@path/to/file.txt" http://localhost:8000/encrypt/upload
+
+# Decrypt (uses the `encrypted_data` field returned above)
+curl -X POST -H "Content-Type: application/json" \
+  -d '{"data": "<ciphertext>"}' http://localhost:8000/decrypt
+```
+
+`FILE_ENCRYPTION_KEY` (a base64 encoded 32-byte key) controls the symmetric key used by these endpoints.
+File uploads require the optional `python-multipart` dependency.
+
 ### 6) Decrypt encrypted values
 ```python
 from src.masking_engine import Config, MaskingEngine
