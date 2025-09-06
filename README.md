@@ -102,6 +102,17 @@ curl -X POST -H "Content-Type: application/json" \
 `FILE_ENCRYPTION_KEY` (a base64 encoded 32-byte key) controls the symmetric key used by these endpoints.
 File uploads require the optional `python-multipart` dependency.
 
+### Streamlit file encryption UI
+
+For a simple browser interface, run the Streamlit app which uses the same
+`FILE_ENCRYPTION_KEY` as the FastAPI service:
+
+```bash
+streamlit run src/streamlit_app.py
+```
+
+The UI lets you upload a file to encrypt or decrypt and download the result.
+
 ### 6) Decrypt encrypted values
 ```python
 from src.masking_engine import Config, MaskingEngine
