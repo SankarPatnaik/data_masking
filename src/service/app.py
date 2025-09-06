@@ -1,12 +1,13 @@
 
 import base64
 import importlib
+import json
 import os
+import re
 from typing import Any, Dict, Optional
 from fastapi import FastAPI, HTTPException
 from starlette.datastructures import UploadFile
 from pydantic import BaseModel
-from cryptography.fernet import Fernet
 from src.masking_engine import Config, MaskingEngine
 
 try:
@@ -28,12 +29,7 @@ try:
 except Exception as e:
     raise RuntimeError(f"Failed to load config {CONFIG_PATH}: {e}")
 
-# Encryption key for file APIs
-_enc_key = os.getenv("FILE_ENCRYPTION_KEY")
-if not _enc_key:
-    # Deterministic default for tests if not provided
-    _enc_key = base64.urlsafe_b64encode(b"0" * 32).decode()
-fernet = Fernet(_enc_key)
+
 
 class TextReq(BaseModel):
     text: str
@@ -70,17 +66,57 @@ def mask_json(req: JsonReq):
 
 
 async def encrypt_upload(file: UploadFile):
-    """Encrypt an uploaded file and return base64 ciphertext."""
+    """Mask an uploaded file and return its base64 representation.
+
+    The file content is inspected; if it contains JSON, ``engine.mask_json`` is
+    applied.  Otherwise the raw text is processed via ``engine.mask_text``.  Only
+    fields detected by the masking engine are encrypted, leaving the overall file
+    structure readable.
+    """
 
     try:
         contents = await file.read()
-        encrypted = fernet.encrypt(contents)
+        text = contents.decode("utf-8")
+        try:
+            obj = json.loads(text)
+            masked = engine.mask_json(obj)["masked_json"]
+            masked_bytes = json.dumps(masked, ensure_ascii=False).encode("utf-8")
+        except json.JSONDecodeError:
+            masked = engine.mask_text(text)["masked_text"]
+            masked_bytes = masked.encode("utf-8")
         return {
             "filename": getattr(file, "filename", ""),
-            "encrypted_data": base64.b64encode(encrypted).decode(),
+            "encrypted_data": base64.b64encode(masked_bytes).decode(),
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+def decrypt_file_contents(data: bytes) -> bytes:
+    """Reverse field-level encryption within the provided file contents."""
+
+    text = data.decode("utf-8")
+    try:
+        obj = json.loads(text)
+
+        def walk(node):
+            if isinstance(node, dict):
+                return {k: walk(v) for k, v in node.items()}
+            if isinstance(node, list):
+                return [walk(x) for x in node]
+            if isinstance(node, str):
+                return engine.decrypt_value(node)
+            return node
+
+        decrypted = walk(obj)
+        return json.dumps(decrypted, ensure_ascii=False).encode("utf-8")
+    except json.JSONDecodeError:
+        pattern = re.compile(r"enc:[^\s\"']+")
+
+        def repl(match: re.Match) -> str:
+            return engine.decrypt_value(match.group(0))
+
+        return pattern.sub(repl, text).encode("utf-8")
 
 
 if _multipart_available:
@@ -91,11 +127,11 @@ if _multipart_available:
 
 @app.post("/decrypt")
 def decrypt_data(req: DecryptReq):
-    """Decrypt base64 ciphertext produced by ``/encrypt/upload``."""
+    """Decrypt data previously processed by ``encrypt_upload``."""
 
     try:
-        encrypted = base64.b64decode(req.data)
-        decrypted = fernet.decrypt(encrypted)
+        masked = base64.b64decode(req.data)
+        decrypted = decrypt_file_contents(masked)
         return {"decrypted_data": base64.b64encode(decrypted).decode()}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
