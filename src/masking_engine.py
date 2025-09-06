@@ -328,12 +328,16 @@ class Transformer:
         If the input does not look like an encrypted value, it is returned as-is.
         Raises ``ValueError`` if decryption fails or AES is not configured.
         """
-        if not token.startswith("enc:"):
+        # Many callers may pass tokens with surrounding whitespace or quotes
+        # (e.g. when copied from JSON).  Normalize the input before checking
+        # whether it looks like an encrypted blob.
+        cleaned = token.strip().strip('"').strip("'")
+        if not cleaned.startswith("enc:"):
             return token
         if self.cfg.enc_algo != "AES_GCM" or AESGCM is None or not self.cfg.aes_key:
             raise ValueError("AES-GCM decryption not configured")
         try:
-            _, _key_id, blob = token.split(":", 2)
+            _, _key_id, blob = cleaned.split(":", 2)
             raw = base64.b64decode(blob)
             nonce, ct = raw[:12], raw[12:]
             aad = "|".join([f"{k}:{context.get(k,'')}" for k in self.cfg.aad_fields]).encode("utf-8")

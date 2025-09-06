@@ -24,3 +24,12 @@ def test_encrypt_decrypt_roundtrip():
     enc_val = masked.split()[-1]
     assert enc_val.startswith("enc:")
     assert engine.decrypt_value(enc_val) == "1234"
+
+
+def test_decrypt_handles_extra_quotes():
+    cfg = Config.from_yaml("tests/config_test.yaml")
+    engine = MaskingEngine(cfg)
+    res = engine.mask_text("My id is 5678")
+    enc_val = res["masked_text"].split()[-1]
+    quoted = f'"{enc_val}"'
+    assert engine.decrypt_value(quoted) == "5678"
