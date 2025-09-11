@@ -32,6 +32,21 @@ python -m spacy download en_core_web_sm
 
 ### 2) Set secrets (examples)
 
+The masking engine reads cryptographic material from environment variables.
+
+**Required**
+
+- `MASKING_AES_KEY_B64` – base64 encoded 32 byte key for AES‑GCM encryption.
+- `MASKING_FPE_KEY_HEX` – hex encoded key used when `fpe.enabled` is `true`.
+
+**Optional**
+
+- `MASKING_SALT_B64` – base64 encoded salt for hashing. Defaults to empty (no salt).
+- `MASKING_TOKEN_SECRET_B64` – base64 encoded secret for deterministic tokens. Defaults to random tokens per value.
+
+If optional variables are unset the engine emits a warning and falls back to
+the listed defaults.
+
 #### Unix/macOS (bash/zsh)
 ```bash
 # 32-byte AES key (base64) for AES-256-GCM

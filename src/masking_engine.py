@@ -1,6 +1,6 @@
 
 from __future__ import annotations
-import os, re, json, base64, hashlib, hmac, copy, uuid, random, string
+import os, re, json, base64, hashlib, hmac, copy, uuid, random, string, warnings
 from dataclasses import dataclass
 from typing import List, Dict, Any, Tuple, Optional, Pattern
 
@@ -100,23 +100,51 @@ class Config:
         # Keys
         aes_key = None
         if enc.get("key_source") == "ENV":
-            k = os.getenv(enc.get("env_key_var", "MASKING_AES_KEY_B64"))
-            if k:
-                aes_key = base64.b64decode(k)
+            env_var = enc.get("env_key_var", "MASKING_AES_KEY_B64")
+            k = os.getenv(env_var)
+            if not k:
+                raise ValueError(
+                    f"Environment variable '{env_var}' is required for AES_GCM encryption"
+                )
+            aes_key = base64.b64decode(k)
 
-        hash_salt = base64.b64decode(os.getenv(hashing.get("salt_env_var", "MASKING_SALT_B64"), ""))
-        token_secret = base64.b64decode(os.getenv(tok.get("secret_env_var", "MASKING_TOKEN_SECRET_B64"), ""))
+        salt_var = hashing.get("salt_env_var", "MASKING_SALT_B64")
+        salt_b64 = os.getenv(salt_var)
+        if not salt_b64:
+            warnings.warn(
+                f"Environment variable '{salt_var}' not set; using empty salt for hashing"
+            )
+            hash_salt = b""
+        else:
+            hash_salt = base64.b64decode(salt_b64)
+
+        token_var = tok.get("secret_env_var", "MASKING_TOKEN_SECRET_B64")
+        token_b64 = os.getenv(token_var)
+        if not token_b64:
+            warnings.warn(
+                f"Environment variable '{token_var}' not set; tokens will be non-deterministic"
+            )
+            token_secret = b""
+        else:
+            token_secret = base64.b64decode(token_b64)
 
         # FPE
         fpe_cipher = None
-        if fpe.get("enabled") and FF3Cipher:
+        if fpe.get("enabled"):
+            if not FF3Cipher:
+                raise ValueError("FPE enabled but ff3 library is not installed")
             tweak = base64.b64decode(fpe.get("tweak", "")) if fpe.get("tweak") else b""
-            fpe_key_hex = os.getenv("MASKING_FPE_KEY_HEX", "")  # hex string
-            if fpe_key_hex:
-                try:
-                    fpe_cipher = FF3Cipher.withCustomAlphabet(fpe_key_hex, tweak, "0123456789")
-                except Exception:
-                    fpe_cipher = None
+            fpe_key_hex = os.getenv("MASKING_FPE_KEY_HEX", "")
+            if not fpe_key_hex:
+                raise ValueError(
+                    "Environment variable 'MASKING_FPE_KEY_HEX' is required when FPE is enabled"
+                )
+            try:
+                fpe_cipher = FF3Cipher.withCustomAlphabet(
+                    fpe_key_hex, tweak, "0123456789"
+                )
+            except Exception as e:
+                raise ValueError("Invalid FPE key configuration") from e
 
         return Config(
             language=raw.get("language", "en"),
