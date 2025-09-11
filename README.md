@@ -127,6 +127,60 @@ plain = engine.decrypt_value(cipher, ctx)
 print(plain)  # PAN ABCDE1234F
 ```
 
+### Generate synthetic data from raw PII
+
+The framework can replace real PII values with fake but realistic data. This is
+useful when you need to share the shape of a dataset without exposing actual
+information.
+
+1. *(Optional)* Install [`faker`](https://faker.readthedocs.io/) for more
+   natural-looking output:
+
+   ```bash
+   pip install faker
+   ```
+
+2. Create a config that marks the fields you want to synthesize using the
+   `SYNTHETIC` policy:
+
+   ```yaml
+   # examples/synthetic_config.yaml
+   language: "en"
+   detection:
+     use_regex: false
+     use_ner: false
+     structured_keys:
+       - key: "(?i)^name$"
+         policy: SYNTHETIC
+       - key: "(?i)^address$"
+         policy: SYNTHETIC
+       - key: "(?i)^phone$"
+         policy: SYNTHETIC
+       - key: "(?i)^email$"
+         policy: SYNTHETIC
+   masking:
+     default_policy: NONE
+   ```
+
+3. Run the CLI on raw data and it will emit a structure with synthetic values:
+
+   ```bash
+   python -m src.cli --config examples/synthetic_config.yaml json examples/raw_synthetic.json
+   ```
+
+   Example output (values will vary each run):
+
+   ```json
+   {
+     "masked_json": {
+       "name": "Alice Jones",
+       "address": "6988 Oak Ave, Fairview",
+       "phone": "23806016143",
+       "email": "hpllzokd@oqcxq.com"
+     }
+   }
+   ```
+
 ---
 
 ## Config-first masking
