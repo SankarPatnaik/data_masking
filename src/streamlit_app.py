@@ -1,17 +1,12 @@
 """Simple Streamlit app for encrypting and decrypting files."""
 
 import base64
-import os
 
 import streamlit as st
-from cryptography.fernet import Fernet
 
+from src.config_loader import get_file_fernet
 
-# Determine encryption key, mirroring the FastAPI service default.
-_enc_key = os.getenv("FILE_ENCRYPTION_KEY")
-if not _enc_key:
-    _enc_key = base64.urlsafe_b64encode(b"0" * 32).decode()
-fernet = Fernet(_enc_key)
+fernet = get_file_fernet()
 
 
 st.title("File Encrypt/Decrypt")
