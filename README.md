@@ -16,7 +16,7 @@ A production-ready Python framework to **detect and protect PII** before sending
 #### Unix/macOS (bash/zsh)
 ```bash
 python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
+pip install .
 # Optional (for NER):
 python -m spacy download en_core_web_sm
 ```
@@ -25,7 +25,7 @@ python -m spacy download en_core_web_sm
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+pip install .
 # Optional (for NER):
 python -m spacy download en_core_web_sm
 ```
@@ -74,11 +74,11 @@ uvicorn src.service.app:app --reload --port 8000
 The `json` command accepts a single JSON object, a JSON array, or newline-delimited JSON (JSON Lines).
 Each record is masked independently.
 ```bash
-python -m src.cli text "Call me at +91-9876543210 or email a@b.com"
+data-mask text "Call me at +91-9876543210 or email a@b.com"
 # Single JSON object
-python -m src.cli json examples/sample.json
+data-mask json examples/sample.json
 # JSON Lines
-python -m src.cli json examples/sample_lines.jsonl
+data-mask json examples/sample_lines.jsonl
 ```
 ### 5) Docker (optional)
 ```bash
@@ -115,7 +115,7 @@ The UI lets you upload a file to encrypt or decrypt and download the result.
 
 ### 6) Decrypt encrypted values
 ```python
-from src.masking_engine import Config, MaskingEngine
+from src import Config, MaskingEngine
 
 cfg = Config.from_yaml("masking_config.yaml")
 engine = MaskingEngine(cfg)

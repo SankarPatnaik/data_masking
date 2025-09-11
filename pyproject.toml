@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "data-masking"
+version = "0.1.0"
+description = "PII Masking & Encryption Framework"
+readme = "README.md"
+license = {file = "LICENSE"}
+requires-python = ">=3.8"
+authors = [{name = "Unknown"}]
+dependencies = [
+    "pyyaml>=6.0.1",
+    "cryptography>=41.0.0",
+    "fastapi>=0.110.0",
+    "uvicorn[standard]>=0.23.0",
+    "spacy>=3.7.0",
+    "ff3>=0.1.0",
+    "streamlit>=1.32.0",
+]
+
+[project.scripts]
+"data-mask" = "src.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["src*"]
