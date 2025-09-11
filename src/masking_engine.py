@@ -1,6 +1,6 @@
 
 from __future__ import annotations
-import os, re, json, base64, hashlib, hmac, copy, uuid
+import os, re, json, base64, hashlib, hmac, copy, uuid, random, string
 from dataclasses import dataclass
 from typing import List, Dict, Any, Tuple, Optional, Pattern
 
@@ -20,6 +20,11 @@ try:
     from ff3 import FF3Cipher  # optional format-preserving encryption
 except Exception:
     FF3Cipher = None
+
+try:
+    from faker import Faker  # optional synthetic data generator
+except Exception:
+    Faker = None
 
 
 # -----------------------------
@@ -240,6 +245,7 @@ class Transformer:
     def __init__(self, cfg: Config):
         self.cfg = cfg
         self._token_cache: Dict[str, str] = {}
+        self.fake = Faker() if Faker else None
 
     def apply_policy_text(self, text: str, spans: List[Span], context: Dict[str, str]) -> Tuple[str, Dict[str, str]]:
         """
@@ -288,6 +294,8 @@ class Transformer:
         elif policy == "TOKENIZE":
             tok = self._tokenize(s)
             return tok, tok  # token used as key in repl_map
+        elif policy == "SYNTHETIC":
+            return self._synthetic(s), None
         else:
             return s, None
 
@@ -310,6 +318,36 @@ class Transformer:
         else:
             t = uuid.uuid4().hex[:24]
         return f"{self.cfg.token_prefix}{t}"
+
+    def _synthetic(self, s: str) -> str:
+        """Generate simple synthetic replacements for common PII types."""
+        # Prefer faker if available for realistic output
+        if self.fake:
+            if re.match(r"[^@]+@[^@]+\.[^@]+", s):
+                return self.fake.email()
+            digits = re.sub(r"\D", "", s)
+            if len(digits) >= 7:
+                return self.fake.phone_number()
+            if re.search(r"\d", s) or any(k in s.lower() for k in ["street", "st", "road", "rd", "ave", "address"]):
+                return self.fake.address().replace("\n", " ")
+            return self.fake.name()
+
+        # Fallback minimal synthetic data without faker
+        if re.match(r"[^@]+@[^@]+\.[^@]+", s):
+            user = "".join(random.choices(string.ascii_lowercase, k=8))
+            domain = "".join(random.choices(string.ascii_lowercase, k=5))
+            return f"{user}@{domain}.com"
+        digits = re.sub(r"\D", "", s)
+        if len(digits) >= 7:
+            return "".join(random.choice(string.digits) for _ in range(len(digits)))
+        if re.search(r"\d", s) or any(k in s.lower() for k in ["street", "st", "road", "rd", "ave", "address"]):
+            num = random.randint(100, 9999)
+            street = random.choice(["Main St", "Oak Ave", "Pine Rd", "Maple St"])
+            city = random.choice(["Springfield", "Fairview", "Riverton"])
+            return f"{num} {street}, {city}"
+        first = random.choice(["Alice", "Bob", "Carol", "David", "Eve"])
+        last = random.choice(["Smith", "Johnson", "Brown", "Williams", "Jones"])
+        return f"{first} {last}"
 
     def _encrypt(self, s: str, context: Dict[str, str]) -> str:
         if self.cfg.enc_algo != "AES_GCM" or AESGCM is None or not self.cfg.aes_key:
