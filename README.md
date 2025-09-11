@@ -245,6 +245,10 @@ This runs without spaCy by using a test config that sets `use_ner: false` and re
 
 ---
 
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for release notes.
+
 ## License
 
 MIT
