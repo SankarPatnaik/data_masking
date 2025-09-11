@@ -1,4 +1,4 @@
-
+# Default masking configuration for general PII detection and masking
 language: 'en'
 models:
   spacy_model: 'en_core_web_sm'  # run: python -m spacy download en_core_web_sm
@@ -54,3 +54,4 @@ output:
   include_annotations: true
   include_replacement_map: false
   drop_plaintext: true
+
