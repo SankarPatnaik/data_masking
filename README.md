@@ -58,16 +58,30 @@ $env:MASKING_TOKEN_SECRET_B64 = python -c "import os,base64;print(base64.b64enco
 
 ### 3) Run the API
 
-#### Unix/macOS (bash/zsh)
+The service reads configuration from environment variables or matching CLI
+flags:
+
+- `MASKING_CONFIG_PATH` – config file path (defaults to `masking_config.yaml`)
+- `SERVICE_HOST` – host interface to bind (defaults to `0.0.0.0`)
+- `SERVICE_PORT` – port to listen on (defaults to `8000`)
+- `SERVICE_RELOAD` – enable auto-reload during development
+
+#### Development
+
 ```bash
-export MASKING_CONFIG_PATH=masking_config.yaml
-uvicorn src.service.app:app --reload --port 8000
+MASKING_CONFIG_PATH=masking_config.yaml python -m src.service.app --reload
 ```
 
-#### Windows (PowerShell)
-```powershell
-$env:MASKING_CONFIG_PATH = "masking_config.yaml"
-uvicorn src.service.app:app --reload --port 8000
+#### Production
+
+```bash
+SERVICE_HOST=0.0.0.0 SERVICE_PORT=8000 python -m src.service.app --config /etc/masking.yaml
+```
+
+You can still invoke Uvicorn directly if preferred:
+
+```bash
+uvicorn src.service.app:app --host 0.0.0.0 --port 8000
 ```
 
 ### 4) Use the CLI (same commands for Unix/PowerShell)
@@ -105,10 +119,19 @@ File uploads require the optional `python-multipart` dependency.
 ### Streamlit file encryption UI
 
 For a simple browser interface, run the Streamlit app which uses the same
-`FILE_ENCRYPTION_KEY` as the FastAPI service:
+`FILE_ENCRYPTION_KEY` as the FastAPI service. Set `FILE_ENCRYPTION_KEY` to
+override the default demo key.
+
+#### Development
 
 ```bash
 streamlit run src/streamlit_app.py
+```
+
+#### Production
+
+```bash
+FILE_ENCRYPTION_KEY=<base64key> streamlit run src/streamlit_app.py --server.address 0.0.0.0 --server.port 8501
 ```
 
 The UI lets you upload a file to encrypt or decrypt and download the result.
