@@ -1,4 +1,11 @@
+"""Compatibility layer for the reorganised package structure."""
+from .core.engine import MaskingEngine
+from .config.models import Config
+from .config.loader import load_config
 
+<<<<<<< codex/organize-code-into-modules-and-improve-structure
+__all__ = ["MaskingEngine", "Config", "load_config"]
+=======
 from __future__ import annotations
 import os, re, json, base64, hashlib, hmac, copy, uuid, random, string, warnings
 from dataclasses import dataclass
@@ -473,3 +480,4 @@ class MaskingEngine:
         """Decrypt an encrypted token produced by the masking engine."""
         context = context or {}
         return self.tx.decrypt_value(token, context)
+>>>>>>> main
