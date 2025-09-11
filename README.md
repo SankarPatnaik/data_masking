@@ -144,7 +144,7 @@ information.
    `SYNTHETIC` policy:
 
    ```yaml
-   # examples/synthetic_config.yaml
+   # masking_config.yaml
    language: "en"
    detection:
      use_regex: false
@@ -165,7 +165,7 @@ information.
 3. Run the CLI on raw data and it will emit a structure with synthetic values:
 
    ```bash
-   python -m src.cli --config examples/synthetic_config.yaml json examples/raw_synthetic.json
+   python -m src.cli --config masking_config.yaml json examples/raw_synthetic.json
    ```
 
    Example output (values will vary each run):
@@ -208,11 +208,16 @@ pii-masking-framework/
 │  └─ service/
 │     └─ app.py                # FastAPI service
 ├─ examples/
-│  ├─ sample_text.txt
-│  └─ sample.json
+│  ├─ masking_config_full.yaml
+│  ├─ raw_synthetic.json
+│  ├─ sample.json
+│  ├─ sample_lines.jsonl
+│  └─ sample_text.txt
 ├─ tests/
+│  ├─ config_test.yaml
+│  ├─ test_file_encryption_api.py
 │  ├─ test_masking_basic.py
-│  └─ config_test.yaml
+│  └─ test_synthetic_masking.py
 ├─ Dockerfile
 └─ .gitignore
 ```

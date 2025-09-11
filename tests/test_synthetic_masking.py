@@ -3,7 +3,7 @@ from src.masking_engine import Config, MaskingEngine
 
 
 def test_structured_synthetic():
-    cfg = Config.from_yaml("tests/config_synthetic.yaml")
+    cfg = Config.from_yaml("masking_config.yaml")
     engine = MaskingEngine(cfg)
     data = {
         "name": "John Doe",
