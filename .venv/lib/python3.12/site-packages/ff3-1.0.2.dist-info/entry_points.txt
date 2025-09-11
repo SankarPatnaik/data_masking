@@ -1,0 +1,3 @@
+[console_scripts]
+ff3_decrypt = ff3.__main__:decrypt
+ff3_encrypt = ff3.__main__:encrypt
