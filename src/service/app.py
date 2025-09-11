@@ -5,8 +5,7 @@ import json
 import os
 import re
 from typing import Any, Dict, Optional
-from fastapi import FastAPI, HTTPException
-from starlette.datastructures import UploadFile
+from fastapi import FastAPI, HTTPException, UploadFile
 from pydantic import BaseModel
 from src.masking_engine import Config, MaskingEngine
 
