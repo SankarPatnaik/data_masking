@@ -30,10 +30,17 @@ def load_config(path: str) -> Config:
     models = raw.get("models", {})
 
     # Structured keys
-    sk = [
-        StructuredKeyRule(key=re.compile(r["key"]), policy=r["policy"].upper())
-        for r in det.get("structured_keys", [])
-    ]
+    sk_cfg = det.get("structured_keys", [])
+    if isinstance(sk_cfg, dict):
+        sk = [
+            StructuredKeyRule(key=re.compile(k), policy=v.upper())
+            for k, v in sk_cfg.items()
+        ]
+    else:
+        sk = [
+            StructuredKeyRule(key=re.compile(r["key"]), policy=r["policy"].upper())
+            for r in sk_cfg
+        ]
 
     # Custom regexes
     rx = [
