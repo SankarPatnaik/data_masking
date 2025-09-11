@@ -1,0 +1,15 @@
+language: en
+detection:
+  use_regex: false
+  use_ner: false
+  structured_keys:
+    - key: "name"
+      policy: SYNTHETIC
+    - key: "address"
+      policy: SYNTHETIC
+    - key: "phone"
+      policy: SYNTHETIC
+    - key: "email"
+      policy: SYNTHETIC
+masking:
+  default_policy: NONE
