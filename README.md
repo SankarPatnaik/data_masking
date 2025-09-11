@@ -181,20 +181,14 @@ information.
    `SYNTHETIC` policy:
 
    ```yaml
-   # examples/configs/synthetic.yaml
+   # src/synthetic.yaml
    language: "en"
    detection:
-     use_regex: false
-     use_ner: false
      structured_keys:
-       - key: "(?i)^name$"
-         policy: SYNTHETIC
-       - key: "(?i)^address$"
-         policy: SYNTHETIC
-       - key: "(?i)^phone$"
-         policy: SYNTHETIC
-       - key: "(?i)^email$"
-         policy: SYNTHETIC
+       name: SYNTHETIC
+       address: SYNTHETIC
+       phone: SYNTHETIC
+       email: SYNTHETIC
    masking:
      default_policy: NONE
    ```
@@ -202,7 +196,7 @@ information.
 3. Run the CLI on raw data and it will emit a structure with synthetic values:
 
    ```bash
-   python -m src.cli --config examples/configs/synthetic.yaml json examples/raw_synthetic.json
+   python -m src.cli --config src/synthetic.yaml json examples/raw_synthetic.json
    ```
 
    Example output (values will vary each run):
@@ -240,13 +234,12 @@ pii-masking-framework/
 ├─ requirements.txt
 ├─ masking_config.yaml
 ├─ src/
+│  ├─ synthetic.yaml
 │  ├─ masking_engine.py        # core detection + policy + transforms
 │  ├─ cli.py                   # CLI entrypoints
 │  └─ service/
 │     └─ app.py                # FastAPI service
 ├─ examples/
-│  ├─ configs/
-│  │  └─ synthetic.yaml
 │  ├─ raw_synthetic.json
 │  ├─ sample.json
 │  ├─ sample_lines.jsonl

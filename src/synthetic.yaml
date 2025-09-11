@@ -1,0 +1,11 @@
+# Example config for generating synthetic PII values in docs and tests
+language: "en"
+detection:
+  structured_keys:
+    name: SYNTHETIC
+    address: SYNTHETIC
+    phone: SYNTHETIC
+    email: SYNTHETIC
+masking:
+  default_policy: NONE
+
