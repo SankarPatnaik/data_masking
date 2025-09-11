@@ -3,7 +3,7 @@
 
 A production-ready Python framework to **detect and protect PII** before sending to LLMs or downstream systems.
 - Hybrid detection: **NER (spaCy)** + **Regex** + **Structured key rules for JSON**
-- Transform policies: **REDACT**, **HASH**, **ENCRYPT (AES-GCM)**, **FPE** (optional), **TOKENIZE**
+- Transform policies: **REDACT**, **HASH**, **ENCRYPT (AES-GCM)**, **FPE** (optional), **TOKENIZE**, **SYNTHETIC**
 - Config-first: add new attributes without code changes
 - Run as a **FastAPI service** or a **CLI**
 
