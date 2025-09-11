@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional
 from fastapi import FastAPI, HTTPException
 from starlette.datastructures import UploadFile
 from pydantic import BaseModel
-from src.masking_engine import Config, MaskingEngine
+from src.config.loader import create_engine
 
 try:
     importlib.import_module("multipart")
@@ -24,8 +24,7 @@ app = FastAPI(title="PII Masking Service", version="1.0.0")
 
 # Load config + engine
 try:
-    cfg = Config.from_yaml(CONFIG_PATH)
-    engine = MaskingEngine(cfg)
+    engine = create_engine(CONFIG_PATH)
 except Exception as e:
     raise RuntimeError(f"Failed to load config {CONFIG_PATH}: {e}")
 

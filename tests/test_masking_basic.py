@@ -1,6 +1,7 @@
+"""Tests for basic masking functionality."""
 
 import os, base64
-from src.masking_engine import Config, MaskingEngine
+from src.config.loader import create_engine
 
 def setup_module(module):
     # minimal secrets
@@ -9,16 +10,14 @@ def setup_module(module):
     os.environ.setdefault("MASKING_TOKEN_SECRET_B64", base64.b64encode(b"tokensecret0123456789012345678901").decode())
 
 def test_text_hash_email():
-    cfg = Config.from_yaml("tests/config_test.yaml")
-    engine = MaskingEngine(cfg)
+    engine = create_engine("tests/config_test.yaml")
     res = engine.mask_text("Email me at user@example.com")
     masked = res["masked_text"]
     assert "hash_" in masked
 
 
 def test_encrypt_decrypt_roundtrip():
-    cfg = Config.from_yaml("tests/config_test.yaml")
-    engine = MaskingEngine(cfg)
+    engine = create_engine("tests/config_test.yaml")
     res = engine.mask_text("My id is 1234")
     masked = res["masked_text"]
     enc_val = masked.split()[-1]
@@ -27,8 +26,7 @@ def test_encrypt_decrypt_roundtrip():
 
 
 def test_decrypt_handles_extra_quotes():
-    cfg = Config.from_yaml("tests/config_test.yaml")
-    engine = MaskingEngine(cfg)
+    engine = create_engine("tests/config_test.yaml")
     res = engine.mask_text("My id is 5678")
     enc_val = res["masked_text"].split()[-1]
     quoted = f'"{enc_val}"'

@@ -1,10 +1,11 @@
+"""Tests for masking synthetic structured data."""
+
 import re
-from src.masking_engine import Config, MaskingEngine
+from src.config.loader import create_engine
 
 
 def test_structured_synthetic():
-    cfg = Config.from_yaml("tests/config_synthetic.yaml")
-    engine = MaskingEngine(cfg)
+    engine = create_engine("tests/config_synthetic.yaml")
     data = {
         "name": "John Doe",
         "address": "123 Main St",
