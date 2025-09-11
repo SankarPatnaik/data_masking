@@ -11,11 +11,6 @@ A production-ready Python framework to **detect and protect PII** before sending
 
 ## Quick start
 
-The framework uses a standard `src/` package layout and loads masking rules
-from an external YAML configuration file. By default the examples refer to
-`masking_config.yaml`, but any path can be supplied via the
-`MASKING_CONFIG_PATH` environment variable.
-
 ### 1) Clone & install
 
 #### Unix/macOS (bash/zsh)
@@ -149,7 +144,7 @@ information.
    `SYNTHETIC` policy:
 
    ```yaml
-   # examples/synthetic_config.yaml
+   # examples/configs/synthetic.yaml
    language: "en"
    detection:
      use_regex: false
@@ -170,7 +165,7 @@ information.
 3. Run the CLI on raw data and it will emit a structure with synthetic values:
 
    ```bash
-   python -m src.cli --config examples/synthetic_config.yaml json examples/raw_synthetic.json
+   python -m src.cli --config examples/configs/synthetic.yaml json examples/raw_synthetic.json
    ```
 
    Example output (values will vary each run):
@@ -188,102 +183,44 @@ information.
 
 ---
 
-## Configuration
+## Config-first masking
 
-All detection rules and masking policies live in a YAML file. The framework
-expects the path to this file in the `MASKING_CONFIG_PATH` environment
-variable (defaults to `masking_config.yaml` in the project root).
-
-Add new attributes via:
+See `masking_config.yaml`. Add new attributes via:
 - `detection.structured_keys`: JSON key patterns + policy
 - `detection.custom_regexes`: regex pattern + policy
 - `entities`: map NER label → policy
-
-### Environment variables
-
-The masking algorithms rely on several secrets. They must be provided as
-base64 encoded values to avoid accidental shell interpretation.
-
-| Variable | Purpose |
-| --- | --- |
-| `MASKING_AES_KEY_B64` | 32-byte AES key used by the **ENCRYPT** policy |
-| `MASKING_SALT_B64` | Salt for deterministic **HASH** operations |
-| `MASKING_TOKEN_SECRET_B64` | Secret key for creating repeatable **TOKENIZE** values |
-| `FILE_ENCRYPTION_KEY` | Optional key for the file encryption endpoints |
 
 > **Never** send the `replacement_map` to LLMs; keep it server-side only.
 
 ---
 
-## Framework structure
+## Project structure
 
 ```
 pii-masking-framework/
 ├─ README.md
 ├─ LICENSE
 ├─ requirements.txt
-├─ masking_config.yaml          # default configuration file
+├─ masking_config.yaml
 ├─ src/
 │  ├─ masking_engine.py        # core detection + policy + transforms
 │  ├─ cli.py                   # CLI entrypoints
-│  ├─ service/                 # FastAPI application
-│  │  └─ app.py
-│  └─ streamlit_app.py         # optional file UI
-├─ examples/                   # sample inputs and configs
-├─ tests/                      # pytest suite
+│  └─ service/
+│     └─ app.py                # FastAPI service
+├─ examples/
+│  ├─ configs/
+│  │  └─ synthetic.yaml
+│  ├─ raw_synthetic.json
+│  ├─ sample.json
+│  ├─ sample_lines.jsonl
+│  └─ sample_text.txt
+├─ tests/
+│  ├─ test_file_encryption_api.py
+│  ├─ test_masking_basic.py
+│  ├─ test_synthetic_masking.py
+│  └─ config_test.yaml
 ├─ Dockerfile
 └─ .gitignore
-```
-
-The `masking_engine` module contains the primary API used by both the CLI and
-service layers. `service/app.py` wraps the engine in a FastAPI app, while
-`cli.py` provides command-line access for batch processing.
-
-## Extension points
-
-The framework is designed to be extended without modifying core code:
-
-- **Custom policies** – implement a new transformation and register it in
-  `masking_engine.py`.
-- **Additional detectors** – add regex patterns, new spaCy models, or third
-  party services in the configuration file.
-- **Service plugins** – mount the engine inside an existing FastAPI or other
-  web application.
-
-These hooks allow the masking engine to adapt to different domains or
-compliance requirements.
-
-## Integration examples
-
-### FastAPI route
-
-```python
-from fastapi import FastAPI
-from src.masking_engine import Config, MaskingEngine
-
-cfg = Config.from_yaml("masking_config.yaml")
-engine = MaskingEngine(cfg)
-app = FastAPI()
-
-@app.post("/mask")
-async def mask_endpoint(payload: dict):
-    ctx = {"tenant_id": payload.get("tenant_id", "t1"), "doc_type": "sample"}
-    return engine.mask_json(payload, ctx)
-```
-
-### Stand‑alone script
-
-```python
-from src.masking_engine import Config, MaskingEngine
-import csv
-
-cfg = Config.from_yaml("masking_config.yaml")
-engine = MaskingEngine(cfg)
-
-with open("records.csv") as fh:
-    for row in csv.DictReader(fh):
-        masked = engine.mask_json(row, {"tenant_id": "t1", "doc_type": "csv"})
-        print(masked)
 ```
 
 ---
