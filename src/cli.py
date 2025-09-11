@@ -1,9 +1,11 @@
+"""Command line interface for the masking engine."""
+
 import argparse
 import json
 import os
 import sys
 
-from src.masking_engine import Config, MaskingEngine
+from src.config.loader import create_engine
 
 def main():
     parser = argparse.ArgumentParser(description="PII Masking CLI")
@@ -17,8 +19,7 @@ def main():
     j.add_argument("path", help="Path to JSON file")
 
     args = parser.parse_args()
-    cfg = Config.from_yaml(args.config)
-    engine = MaskingEngine(cfg)
+    engine = create_engine(args.config)
 
     if args.cmd == "text":
         res = engine.mask_text(args.text)

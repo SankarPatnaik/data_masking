@@ -153,10 +153,9 @@ The UI lets you upload a file to encrypt or decrypt and download the result.
 
 ### 6) Decrypt encrypted values
 ```python
-from src.masking_engine import Config, MaskingEngine
+from src.config.loader import create_engine
 
-cfg = Config.from_yaml("masking_config.yaml")
-engine = MaskingEngine(cfg)
+engine = create_engine("masking_config.yaml")
 
 ctx = {"tenant_id": "t1", "doc_type": "sample"}
 res = engine.mask_text("PAN ABCDE1234F", ctx)

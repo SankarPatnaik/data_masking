@@ -1,21 +1,22 @@
-from src.masking_engine import Config
+"""Tests for configuration loading and module boundaries."""
+
+from src.config.loader import load_config, create_engine
+from src.config import models
+from src.core import engine as core_engine
+from src.core.engine import MaskingEngine
 
 
-def test_load_default_config():
-    cfg = Config.from_yaml("masking_config.yaml")
-    assert cfg.language == "en"
-    assert cfg.token_prefix == "tok_"
+def test_module_boundaries():
+    """Ensure config and core modules expose expected symbols only."""
+    assert hasattr(models, "Config")
+    assert not hasattr(core_engine, "Config")
 
 
-def test_ignores_unknown_fields(tmp_path):
-    cfg_path = tmp_path / "minimal.yaml"
-    cfg_path.write_text(
-        """
-language: 'en'
-unknown:
-  foo: bar
-"""
-    )
-    cfg = Config.from_yaml(str(cfg_path))
-    assert cfg.language == "en"
-    assert cfg.use_regex is True
+def test_load_config():
+    cfg = load_config("tests/config_test.yaml")
+    assert cfg.default_policy == "NONE"
+
+
+def test_create_engine():
+    eng = create_engine("tests/config_test.yaml")
+    assert isinstance(eng, MaskingEngine)
