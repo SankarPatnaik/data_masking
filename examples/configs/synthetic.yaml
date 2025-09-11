@@ -1,3 +1,4 @@
+# Example config for generating synthetic PII values in docs and tests
 language: "en"
 detection:
   use_regex: false
@@ -13,3 +14,4 @@ detection:
       policy: SYNTHETIC
 masking:
   default_policy: NONE
+

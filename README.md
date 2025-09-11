@@ -32,6 +32,21 @@ python -m spacy download en_core_web_sm
 
 ### 2) Set secrets (examples)
 
+The masking engine reads cryptographic material from environment variables.
+
+**Required**
+
+- `MASKING_AES_KEY_B64` – base64 encoded 32 byte key for AES‑GCM encryption.
+- `MASKING_FPE_KEY_HEX` – hex encoded key used when `fpe.enabled` is `true`.
+
+**Optional**
+
+- `MASKING_SALT_B64` – base64 encoded salt for hashing. Defaults to empty (no salt).
+- `MASKING_TOKEN_SECRET_B64` – base64 encoded secret for deterministic tokens. Defaults to random tokens per value.
+
+If optional variables are unset the engine emits a warning and falls back to
+the listed defaults.
+
 #### Unix/macOS (bash/zsh)
 ```bash
 # 32-byte AES key (base64) for AES-256-GCM
@@ -58,16 +73,30 @@ $env:MASKING_TOKEN_SECRET_B64 = python -c "import os,base64;print(base64.b64enco
 
 ### 3) Run the API
 
-#### Unix/macOS (bash/zsh)
+The service reads configuration from environment variables or matching CLI
+flags:
+
+- `MASKING_CONFIG_PATH` – config file path (defaults to `masking_config.yaml`)
+- `SERVICE_HOST` – host interface to bind (defaults to `0.0.0.0`)
+- `SERVICE_PORT` – port to listen on (defaults to `8000`)
+- `SERVICE_RELOAD` – enable auto-reload during development
+
+#### Development
+
 ```bash
-export MASKING_CONFIG_PATH=masking_config.yaml
-uvicorn src.service.app:app --reload --port 8000
+MASKING_CONFIG_PATH=masking_config.yaml python -m src.service.app --reload
 ```
 
-#### Windows (PowerShell)
-```powershell
-$env:MASKING_CONFIG_PATH = "masking_config.yaml"
-uvicorn src.service.app:app --reload --port 8000
+#### Production
+
+```bash
+SERVICE_HOST=0.0.0.0 SERVICE_PORT=8000 python -m src.service.app --config /etc/masking.yaml
+```
+
+You can still invoke Uvicorn directly if preferred:
+
+```bash
+uvicorn src.service.app:app --host 0.0.0.0 --port 8000
 ```
 
 ### 4) Use the CLI (same commands for Unix/PowerShell)
@@ -105,10 +134,19 @@ File uploads require the optional `python-multipart` dependency.
 ### Streamlit file encryption UI
 
 For a simple browser interface, run the Streamlit app which uses the same
-`FILE_ENCRYPTION_KEY` as the FastAPI service:
+`FILE_ENCRYPTION_KEY` as the FastAPI service. Set `FILE_ENCRYPTION_KEY` to
+override the default demo key.
+
+#### Development
 
 ```bash
 streamlit run src/streamlit_app.py
+```
+
+#### Production
+
+```bash
+FILE_ENCRYPTION_KEY=<base64key> streamlit run src/streamlit_app.py --server.address 0.0.0.0 --server.port 8501
 ```
 
 The UI lets you upload a file to encrypt or decrypt and download the result.
@@ -143,7 +181,7 @@ information.
    `SYNTHETIC` policy:
 
    ```yaml
-   # examples/synthetic_config.yaml
+   # examples/configs/synthetic.yaml
    language: "en"
    detection:
      use_regex: false
@@ -164,7 +202,7 @@ information.
 3. Run the CLI on raw data and it will emit a structure with synthetic values:
 
    ```bash
-   python -m src.cli --config examples/synthetic_config.yaml json examples/raw_synthetic.json
+   python -m src.cli --config examples/configs/synthetic.yaml json examples/raw_synthetic.json
    ```
 
    Example output (values will vary each run):
@@ -207,10 +245,16 @@ pii-masking-framework/
 │  └─ service/
 │     └─ app.py                # FastAPI service
 ├─ examples/
-│  ├─ sample_text.txt
-│  └─ sample.json
+│  ├─ configs/
+│  │  └─ synthetic.yaml
+│  ├─ raw_synthetic.json
+│  ├─ sample.json
+│  ├─ sample_lines.jsonl
+│  └─ sample_text.txt
 ├─ tests/
+│  ├─ test_file_encryption_api.py
 │  ├─ test_masking_basic.py
+│  ├─ test_synthetic_masking.py
 │  └─ config_test.yaml
 ├─ Dockerfile
 └─ .gitignore
@@ -237,6 +281,10 @@ pytest -q
 This runs without spaCy by using a test config that sets `use_ner: false` and relies on regex.
 
 ---
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for release notes.
 
 ## License
 
