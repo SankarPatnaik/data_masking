@@ -115,28 +115,48 @@ docker build -t pii-masking .
 docker run -p 8000:8000 --env-file .env pii-masking
 ```
 
-### 6) MCP server (optional)
+### 6) MCP servers (optional)
 
-The framework can also run as a minimal [Model Context Protocol](https://modelcontextprotocol.io/)
-server exposing a ``mask_pii`` tool.  The tool either redacts or hashes e‑mails
-and phone numbers before text is forwarded to an LLM.
-
-```bash
-python -m src.service.mcp_server
-```
-
-Within an MCP-compatible agent the tool can be invoked as::
-
-```python
-mask_pii(text="Email me at a@b.com", mode="redact")
-```
-
-Installing the optional ``mcp`` package is required to run the server:
+The optional [`mcp`](https://pypi.org/project/mcp/) package lets the project
+expose simple [Model Context Protocol](https://modelcontextprotocol.io/)
+servers.
 
 ```bash
 pip install mcp
 ```
 
+#### Basic masking server
+
+Run a minimal server exposing a ``mask_pii`` tool that redacts or hashes
+e‑mails and phone numbers before text is forwarded to an LLM.
+
+```bash
+python -m src.service.mcp_server
+```
+
+Within an MCP-compatible agent the tool can be invoked as:
+
+```python
+mask_pii(text="Email me at a@b.com", mode="redact")
+```
+
+#### KYC demo server
+
+For simple Know Your Customer workflows the project also ships a demo server
+with additional tools for extracting ultimate beneficial owners, classifying
+documents, and validating required document sets.
+
+```bash
+python -m src.service.kyc_server
+```
+
+Available tools inside an MCP agent:
+
+```python
+extract_ubos(entity_id="acme_corp")
+classify_document(text="Here is a utility bill for address verification")
+validate_required_docs(entity_id="acme_corp", provided_docs=["registration", "director_id"])
+```
 
 ### Encrypt and decrypt files
 
