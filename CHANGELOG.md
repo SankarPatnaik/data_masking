@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- MCP server exposing a `mask_pii` tool for redacting or hashing emails and phone numbers.
+
 ## [0.1.0] - 2025-09-11
 ### Breaking Changes
 - None.

@@ -115,6 +115,29 @@ docker build -t pii-masking .
 docker run -p 8000:8000 --env-file .env pii-masking
 ```
 
+### 6) MCP server (optional)
+
+The framework can also run as a minimal [Model Context Protocol](https://modelcontextprotocol.io/)
+server exposing a ``mask_pii`` tool.  The tool either redacts or hashes e‑mails
+and phone numbers before text is forwarded to an LLM.
+
+```bash
+python -m src.service.mcp_server
+```
+
+Within an MCP-compatible agent the tool can be invoked as::
+
+```python
+mask_pii(text="Email me at a@b.com", mode="redact")
+```
+
+Installing the optional ``mcp`` package is required to run the server:
+
+```bash
+pip install mcp
+```
+
+
 ### Encrypt and decrypt files
 
 The FastAPI service also exposes simple endpoints for encrypting uploaded files and decrypting the ciphertext.
